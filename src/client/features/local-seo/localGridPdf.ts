@@ -116,77 +116,79 @@ async function captureLeafletMap(
   );
   await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
   const mapRect = mapElement.getBoundingClientRect();
+  const scale = Math.max(2, Math.min(window.devicePixelRatio, 3));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(mapRect.width * scale);
+  canvas.height = Math.round(mapRect.height * scale);
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Your browser could not create the map image");
+  context.scale(scale, scale);
+  context.fillStyle = "#f8fafc";
+  context.fillRect(0, 0, mapRect.width, mapRect.height);
+
+  for (const tile of tileImages) {
+    if (!tile.complete || tile.naturalWidth === 0) continue;
+    const rect = tile.getBoundingClientRect();
+    context.drawImage(
+      tile,
+      rect.left - mapRect.left,
+      rect.top - mapRect.top,
+      rect.width,
+      rect.height,
+    );
+  }
+
   const markerSnapshots = [
     ...mapElement.querySelectorAll<SVGPathElement>(
       ".leaflet-overlay-pane path.leaflet-interactive",
     ),
-  ].map((marker) => ({
-    fill: marker.getAttribute("fill") ?? "#525252",
-    fillOpacity: marker.getAttribute("fill-opacity") ?? "1",
-    rect: marker.getBoundingClientRect(),
-    stroke: marker.getAttribute("stroke") ?? "#525252",
-    strokeWidth: marker.getAttribute("stroke-width") ?? "2",
-  }));
-  const tooltipRects = [
+  ];
+  const tooltips = [
     ...mapElement.querySelectorAll<HTMLElement>(".leaflet-tooltip"),
-  ].map((tooltip) => tooltip.getBoundingClientRect());
-  const { default: html2canvas } = await import("html2canvas");
-  const canvas = await html2canvas(mapElement, {
-    allowTaint: false,
-    backgroundColor: "#f8fafc",
-    imageTimeout: 20_000,
-    logging: false,
-    onclone: (clonedDocument) => {
-      const clonedMap = clonedDocument.getElementById(mapElement.id);
-      if (!clonedMap) return;
-      clonedMap.style.backgroundColor = "#f8fafc";
-      clonedMap.style.color = "#111827";
+  ];
+  markerSnapshots.forEach((marker, index) => {
+    const rect = marker.getBoundingClientRect();
+    const centerX = rect.left - mapRect.left + rect.width / 2;
+    const centerY = rect.top - mapRect.top + rect.height / 2;
+    context.beginPath();
+    context.arc(centerX, centerY, rect.width / 2, 0, Math.PI * 2);
+    context.globalAlpha = Number(marker.getAttribute("fill-opacity") ?? "1");
+    context.fillStyle = marker.getAttribute("fill") ?? "#525252";
+    context.fill();
+    context.globalAlpha = 1;
+    context.lineWidth = Number(marker.getAttribute("stroke-width") ?? "2");
+    context.strokeStyle = marker.getAttribute("stroke") ?? "#525252";
+    context.stroke();
 
-      const overlayPane = clonedMap.querySelector<HTMLElement>(
-        ".leaflet-overlay-pane",
-      );
-      const tooltipPane = clonedMap.querySelector<HTMLElement>(
-        ".leaflet-tooltip-pane",
-      );
-      if (overlayPane) overlayPane.style.display = "none";
-      if (tooltipPane) tooltipPane.style.display = "none";
-
-      for (const marker of markerSnapshots) {
-        const circle = clonedDocument.createElement("div");
-        circle.style.background = marker.fill;
-        circle.style.border = `${marker.strokeWidth}px solid ${marker.stroke}`;
-        circle.style.borderRadius = "9999px";
-        circle.style.boxSizing = "border-box";
-        circle.style.height = `${marker.rect.height}px`;
-        circle.style.left = `${marker.rect.left - mapRect.left}px`;
-        circle.style.opacity = marker.fillOpacity;
-        circle.style.position = "absolute";
-        circle.style.top = `${marker.rect.top - mapRect.top}px`;
-        circle.style.width = `${marker.rect.width}px`;
-        circle.style.zIndex = "800";
-        clonedMap.appendChild(circle);
-      }
-
-      const clonedTooltips = [
-        ...clonedMap.querySelectorAll<HTMLElement>(".leaflet-tooltip"),
-      ];
-      for (const [index, tooltip] of clonedTooltips.entries()) {
-        const rect = tooltipRects[index];
-        if (!rect) continue;
-        tooltip.style.inset = "auto";
-        tooltip.style.left = `${rect.left - mapRect.left}px`;
-        tooltip.style.margin = "0";
-        tooltip.style.opacity = "1";
-        tooltip.style.position = "absolute";
-        tooltip.style.top = `${rect.top - mapRect.top}px`;
-        tooltip.style.transform = "none";
-        tooltip.style.zIndex = "1000";
-        clonedMap.appendChild(tooltip);
-      }
-    },
-    scale: Math.max(2, Math.min(window.devicePixelRatio, 3)),
-    useCORS: true,
+    const tooltip = tooltips[index];
+    if (!tooltip) return;
+    context.fillStyle = tooltip.classList.contains("local-grid-rank-label-dark")
+      ? "#172033"
+      : "#ffffff";
+    context.font = "800 12px Arial, sans-serif";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillText(tooltip.textContent ?? "", centerX, centerY);
   });
+
+  const attribution = "Leaflet | © OpenStreetMap contributors";
+  context.font = "11px Arial, sans-serif";
+  const attributionWidth = context.measureText(attribution).width + 8;
+  context.fillStyle = "rgba(255, 255, 255, 0.85)";
+  context.fillRect(
+    mapRect.width - attributionWidth,
+    mapRect.height - 18,
+    attributionWidth,
+    18,
+  );
+  context.fillStyle = "#0078a8";
+  context.textAlign = "left";
+  context.textBaseline = "middle";
+  context.fillText(
+    attribution,
+    mapRect.width - attributionWidth + 4,
+    mapRect.height - 9,
+  );
   if (canvas.width === 0 || canvas.height === 0) {
     throw new Error("The map could not be captured. Please try again.");
   }
