@@ -6,6 +6,9 @@ import type { Plugin } from "vite";
 const JUST_BASH_STUB = fileURLToPath(
   new URL("./src/server/lib/just-bash-stub.ts", import.meta.url),
 );
+const LOCAL_GRID_PDF_STUB = fileURLToPath(
+  new URL("./src/server/lib/local-grid-pdf-stub.ts", import.meta.url),
+);
 const WORKERS_AI_PROVIDER_STUB = fileURLToPath(
   new URL("./src/server/lib/workers-ai-provider-stub.ts", import.meta.url),
 );
@@ -80,6 +83,7 @@ const EAGER_DENYLIST: Array<{ pattern: RegExp; expected: string }> = [
 export function leanWorkerBundle(): Plugin {
   return {
     name: "lean-worker-bundle",
+    enforce: "pre",
     config() {
       return {
         resolve: {
@@ -111,6 +115,17 @@ export function leanWorkerBundle(): Plugin {
       );
       if (barrel) {
         return `export { default as en } from "./en.${barrel[1]}";`;
+      }
+    },
+    resolveId(source, importer) {
+      if (
+        this.environment.name === "ssr" &&
+        source === "./localGridPdf" &&
+        importer?.includes(
+          "/src/client/features/local-seo/LocalGridResults.tsx",
+        )
+      ) {
+        return LOCAL_GRID_PDF_STUB;
       }
     },
     generateBundle(_options, bundle) {
