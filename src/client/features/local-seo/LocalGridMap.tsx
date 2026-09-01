@@ -104,7 +104,8 @@ export function LocalGridMap({
       <div
         id={captureId}
         ref={containerRef}
-        className="h-[34rem] min-h-96 w-full bg-base-200"
+        className="h-[34rem] min-h-96 w-full"
+        style={{ backgroundColor: "#f8fafc" }}
         aria-label="Local ranking map grid"
       />
       {loadFailed ? (

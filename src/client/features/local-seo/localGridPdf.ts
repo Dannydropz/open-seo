@@ -139,6 +139,8 @@ async function captureLeafletMap(
     onclone: (clonedDocument) => {
       const clonedMap = clonedDocument.getElementById(mapElement.id);
       if (!clonedMap) return;
+      clonedMap.style.backgroundColor = "#f8fafc";
+      clonedMap.style.color = "#111827";
 
       const overlayPane = clonedMap.querySelector<HTMLElement>(
         ".leaflet-overlay-pane",
