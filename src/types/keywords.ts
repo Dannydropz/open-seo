@@ -62,4 +62,6 @@ export type SerpResultItem = {
   backlinks: number | null;
   isNew: boolean;
   rankChange: number | null;
+  /** Ahrefs Domain Rating for an organic top-three result, if available. */
+  ahrefsDr: number | null;
 };

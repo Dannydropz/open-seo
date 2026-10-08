@@ -55,6 +55,7 @@ import { Route as ProjectPProjectIdRankTrackingIndexRouteImport } from './routes
 import { Route as ProjectPProjectIdLocalIndexRouteImport } from './routes/_project/p/$projectId/local/index'
 import { Route as ProjectPProjectIdAuditIndexRouteImport } from './routes/_project/p/$projectId/audit/index'
 import { Route as ProjectPProjectIdSettingsIntegrationsRouteImport } from './routes/_project/p/$projectId/settings/integrations'
+import { Route as ProjectPProjectIdSettingsIcpRouteImport } from './routes/_project/p/$projectId/settings/icp'
 import { Route as ProjectPProjectIdSettingsContextRouteImport } from './routes/_project/p/$projectId/settings/context'
 import { Route as ProjectPProjectIdRankTrackingConfigIdRouteImport } from './routes/_project/p/$projectId/rank-tracking/$configId'
 import { Route as ProjectPProjectIdLocalGridRouteImport } from './routes/_project/p/$projectId/local/grid'
@@ -304,6 +305,12 @@ const ProjectPProjectIdSettingsIntegrationsRoute =
     path: '/integrations',
     getParentRoute: () => ProjectPProjectIdSettingsRoute,
   } as any)
+const ProjectPProjectIdSettingsIcpRoute =
+  ProjectPProjectIdSettingsIcpRouteImport.update({
+    id: '/icp',
+    path: '/icp',
+    getParentRoute: () => ProjectPProjectIdSettingsRoute,
+  } as any)
 const ProjectPProjectIdSettingsContextRoute =
   ProjectPProjectIdSettingsContextRouteImport.update({
     id: '/context',
@@ -382,6 +389,7 @@ export interface FileRoutesByFullPath {
   '/p/$projectId/local/grid': typeof ProjectPProjectIdLocalGridRouteWithChildren
   '/p/$projectId/rank-tracking/$configId': typeof ProjectPProjectIdRankTrackingConfigIdRoute
   '/p/$projectId/settings/context': typeof ProjectPProjectIdSettingsContextRoute
+  '/p/$projectId/settings/icp': typeof ProjectPProjectIdSettingsIcpRoute
   '/p/$projectId/settings/integrations': typeof ProjectPProjectIdSettingsIntegrationsRoute
   '/p/$projectId/audit/': typeof ProjectPProjectIdAuditIndexRoute
   '/p/$projectId/local/': typeof ProjectPProjectIdLocalIndexRoute
@@ -426,6 +434,7 @@ export interface FileRoutesByTo {
   '/p/$projectId': typeof ProjectPProjectIdIndexRoute
   '/p/$projectId/rank-tracking/$configId': typeof ProjectPProjectIdRankTrackingConfigIdRoute
   '/p/$projectId/settings/context': typeof ProjectPProjectIdSettingsContextRoute
+  '/p/$projectId/settings/icp': typeof ProjectPProjectIdSettingsIcpRoute
   '/p/$projectId/settings/integrations': typeof ProjectPProjectIdSettingsIntegrationsRoute
   '/p/$projectId/audit': typeof ProjectPProjectIdAuditIndexRoute
   '/p/$projectId/local': typeof ProjectPProjectIdLocalIndexRoute
@@ -481,6 +490,7 @@ export interface FileRoutesById {
   '/_project/p/$projectId/local/grid': typeof ProjectPProjectIdLocalGridRouteWithChildren
   '/_project/p/$projectId/rank-tracking/$configId': typeof ProjectPProjectIdRankTrackingConfigIdRoute
   '/_project/p/$projectId/settings/context': typeof ProjectPProjectIdSettingsContextRoute
+  '/_project/p/$projectId/settings/icp': typeof ProjectPProjectIdSettingsIcpRoute
   '/_project/p/$projectId/settings/integrations': typeof ProjectPProjectIdSettingsIntegrationsRoute
   '/_project/p/$projectId/audit/': typeof ProjectPProjectIdAuditIndexRoute
   '/_project/p/$projectId/local/': typeof ProjectPProjectIdLocalIndexRoute
@@ -533,6 +543,7 @@ export interface FileRouteTypes {
     | '/p/$projectId/local/grid'
     | '/p/$projectId/rank-tracking/$configId'
     | '/p/$projectId/settings/context'
+    | '/p/$projectId/settings/icp'
     | '/p/$projectId/settings/integrations'
     | '/p/$projectId/audit/'
     | '/p/$projectId/local/'
@@ -577,6 +588,7 @@ export interface FileRouteTypes {
     | '/p/$projectId'
     | '/p/$projectId/rank-tracking/$configId'
     | '/p/$projectId/settings/context'
+    | '/p/$projectId/settings/icp'
     | '/p/$projectId/settings/integrations'
     | '/p/$projectId/audit'
     | '/p/$projectId/local'
@@ -631,6 +643,7 @@ export interface FileRouteTypes {
     | '/_project/p/$projectId/local/grid'
     | '/_project/p/$projectId/rank-tracking/$configId'
     | '/_project/p/$projectId/settings/context'
+    | '/_project/p/$projectId/settings/icp'
     | '/_project/p/$projectId/settings/integrations'
     | '/_project/p/$projectId/audit/'
     | '/_project/p/$projectId/local/'
@@ -981,6 +994,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProjectPProjectIdSettingsIntegrationsRouteImport
       parentRoute: typeof ProjectPProjectIdSettingsRoute
     }
+    '/_project/p/$projectId/settings/icp': {
+      id: '/_project/p/$projectId/settings/icp'
+      path: '/icp'
+      fullPath: '/p/$projectId/settings/icp'
+      preLoaderRoute: typeof ProjectPProjectIdSettingsIcpRouteImport
+      parentRoute: typeof ProjectPProjectIdSettingsRoute
+    }
     '/_project/p/$projectId/settings/context': {
       id: '/_project/p/$projectId/settings/context'
       path: '/context'
@@ -1123,6 +1143,7 @@ const ProjectPProjectIdRankTrackingRouteWithChildren =
 
 interface ProjectPProjectIdSettingsRouteChildren {
   ProjectPProjectIdSettingsContextRoute: typeof ProjectPProjectIdSettingsContextRoute
+  ProjectPProjectIdSettingsIcpRoute: typeof ProjectPProjectIdSettingsIcpRoute
   ProjectPProjectIdSettingsIntegrationsRoute: typeof ProjectPProjectIdSettingsIntegrationsRoute
   ProjectPProjectIdSettingsIndexRoute: typeof ProjectPProjectIdSettingsIndexRoute
 }
@@ -1131,6 +1152,7 @@ const ProjectPProjectIdSettingsRouteChildren: ProjectPProjectIdSettingsRouteChil
   {
     ProjectPProjectIdSettingsContextRoute:
       ProjectPProjectIdSettingsContextRoute,
+    ProjectPProjectIdSettingsIcpRoute: ProjectPProjectIdSettingsIcpRoute,
     ProjectPProjectIdSettingsIntegrationsRoute:
       ProjectPProjectIdSettingsIntegrationsRoute,
     ProjectPProjectIdSettingsIndexRoute: ProjectPProjectIdSettingsIndexRoute,

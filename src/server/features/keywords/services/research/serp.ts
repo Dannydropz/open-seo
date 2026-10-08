@@ -5,6 +5,7 @@ import type { SerpResultItem } from "@/types/keywords";
 import { z } from "zod";
 import type { BillingCustomerContext } from "@/server/billing/subscription";
 import { createDataforseoClient } from "@/server/lib/dataforseo";
+import { getAhrefsDomainRatingsForDomains } from "@/server/lib/ahrefs-domain-rating";
 import { normalizeKeyword } from "./helpers";
 
 const SERP_CACHE_TTL_SECONDS = 12 * 60 * 60;
@@ -29,6 +30,7 @@ const serpResultItemSchema = z.object({
   backlinks: z.number().nullable(),
   isNew: z.boolean(),
   rankChange: z.number().nullable(),
+  ahrefsDr: z.number().nullable().optional().default(null),
 });
 
 const serpCacheSchema = z.object({
@@ -52,6 +54,7 @@ function mapOrganicSerpItems(items: SerpLiveItem[]): SerpResultItem[] {
       backlinks: item.backlinks_info?.backlinks ?? null,
       isNew: false,
       rankChange: null,
+      ahrefsDr: null,
     }));
 }
 
@@ -76,30 +79,43 @@ async function getSerpLiveAnalysis(
 
   const cachedRaw = await getCached(cacheKey);
   const cached = serpCacheSchema.safeParse(cachedRaw);
-  if (cached.success) {
-    return cached.data;
+  const result = cached.success
+    ? cached.data
+    : await buildSerpAnalysis(input, billingCustomer, keyword);
+  const topThreeDomains = result.items.slice(0, 3).map((item) => item.domain);
+  if (topThreeDomains.length > 0) {
+    const ratings = await getAhrefsDomainRatingsForDomains(topThreeDomains);
+    result.items = result.items.map((item, index) => ({
+      ...item,
+      ahrefsDr: index < 3 ? (ratings[item.domain] ?? null) : null,
+    }));
   }
 
-  const liveItems = await createDataforseoClient(billingCustomer).serp.live({
-    keyword,
-    locationCode: input.locationCode,
-    languageCode: input.languageCode,
-  });
-
-  const items = mapOrganicSerpItems(liveItems);
-  const result: SerpAnalysisResult = { requestedKeyword: keyword, items };
-  if (items.length === 0) {
-    result.reason = "no_organic_results";
-  }
-
-  // waitUntil, not void: workerd cancels unregistered pending I/O once the
-  // response is sent, so a fire-and-forget put never persists the cache.
+  // The cache predates DR enrichment, so write on every result. Ahrefs itself
+  // is cache-first for a day; this only updates the combined SERP snapshot.
   waitUntil(
     setCached(cacheKey, result, SERP_CACHE_TTL_SECONDS).catch((error) => {
       console.error("keywords.serp.cache-write failed:", error);
     }),
   );
+  return result;
+}
 
+async function buildSerpAnalysis(
+  input: { keyword: string; locationCode: number; languageCode: string },
+  billingCustomer: BillingCustomerContext,
+  keyword: string,
+): Promise<SerpAnalysisResult> {
+  const liveItems = await createDataforseoClient(billingCustomer).serp.live({
+    keyword,
+    locationCode: input.locationCode,
+    languageCode: input.languageCode,
+  });
+  const items = mapOrganicSerpItems(liveItems);
+  const result: SerpAnalysisResult = { requestedKeyword: keyword, items };
+  if (items.length === 0) {
+    result.reason = "no_organic_results";
+  }
   return result;
 }
 

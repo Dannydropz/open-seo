@@ -23,6 +23,18 @@ export function SerpAnalysisCard({
 }) {
   const totalPages = Math.ceil(items.length / pageSize);
   const pageItems = items.slice(page * pageSize, (page + 1) * pageSize);
+  const topThree = items.slice(0, 3);
+  const ratedTopThree = topThree.filter(
+    (item): item is SerpResultItem & { ahrefsDr: number } =>
+      item.ahrefsDr !== null,
+  );
+  const averageTopThreeDr =
+    ratedTopThree.length > 0
+      ? Math.round(
+          ratedTopThree.reduce((total, item) => total + item.ahrefsDr, 0) /
+            ratedTopThree.length,
+        )
+      : null;
 
   if (loading) return <SerpAnalysisLoadingState />;
   if (error) {
@@ -42,16 +54,20 @@ export function SerpAnalysisCard({
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <div className="text-xs text-base-content/50">
-          {items.length} organic results
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-base-content/50">
+          <span>{items.length} organic results</span>
+          <span title="Ahrefs Domain Rating for the first three organic domains">
+            Top 3 Ahrefs DR: {averageTopThreeDr ?? "—"}
+          </span>
         </div>
         <ExportToSheetsButton
-          headers={["Rank", "Title", "URL", "Domain"]}
+          headers={["Rank", "Title", "URL", "Domain", "Ahrefs DR"]}
           rows={items.map((item) => [
             item.rank,
             item.title ?? "",
             item.url,
             item.domain,
+            item.ahrefsDr ?? "",
           ])}
           feature="serp_analysis"
         />
@@ -74,6 +90,9 @@ function SerpAnalysisTable({ items }: { items: SerpResultItem[] }) {
           <tr className="text-xs text-base-content/60">
             <th className="w-8">#</th>
             <th>Page</th>
+            <th className="w-16 text-right" title="Ahrefs Domain Rating">
+              DR
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -101,6 +120,9 @@ function SerpAnalysisTable({ items }: { items: SerpResultItem[] }) {
                     {item.domain}
                   </span>
                 </div>
+              </td>
+              <td className="text-right font-mono text-xs text-base-content/60">
+                {item.ahrefsDr ?? "—"}
               </td>
             </tr>
           ))}
